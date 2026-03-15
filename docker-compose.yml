@@ -1,0 +1,36 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: quotestream-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       quotestream
+      POSTGRES_USER:     quotestream
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-quotestream_dev}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quotestream"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"   # expose locally for dev; remove in prod
+
+  app:
+    build: .
+    container_name: quotestream-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL:      jdbc:postgresql://db:5432/quotestream
+      DB_USER:     quotestream
+      DB_PASSWORD: ${DB_PASSWORD:-quotestream_dev}
+    ports:
+      - "8080:8080"
+
+volumes:
+  pg_data:

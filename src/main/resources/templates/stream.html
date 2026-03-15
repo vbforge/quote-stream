@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head('Stream')}"></head>
+<body class="page-stream">
+
+<div class="stream-bg">
+    <div class="stream-bg__orb stream-bg__orb--1"></div>
+    <div class="stream-bg__orb stream-bg__orb--2"></div>
+    <div class="stream-bg__orb stream-bg__orb--3"></div>
+</div>
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="stream-main">
+    <div class="quote-stage" id="quoteStage">
+
+        <!-- No quotes available -->
+        <div th:if="${quote == null}" class="quote-empty">
+            <span class="quote-empty__icon">✦</span>
+            <p>No quotes available yet.</p>
+            <sec:authorize access="isAnonymous()">
+                <a th:href="@{/register}" class="btn btn--ghost">Add the first one →</a>
+            </sec:authorize>
+        </div>
+
+        <!-- Quote display -->
+        <div th:if="${quote != null}" class="quote-card" id="quoteCard">
+            <div class="quote-card__mark">"</div>
+            <blockquote class="quote-card__text" id="quoteText"
+                        th:text="${quote.text}">Quote text here</blockquote>
+            <footer class="quote-card__footer">
+                <cite class="quote-card__author" id="quoteAuthor"
+                      th:text="${quote.author != null ? quote.author : ''}">Author</cite>
+                <span th:if="${quote.category != null}"
+                      class="quote-card__category" id="quoteCategory"
+                      th:text="${quote.category.name}">Category</span>
+            </footer>
+        </div>
+
+        <!-- Timer bar -->
+        <div class="timer-wrap" th:if="${quote != null}">
+            <div class="timer-bar">
+                <div class="timer-bar__fill" id="timerBarFill"></div>
+            </div>
+            <span class="timer-label">
+                Next in <strong id="countdownDisplay"
+                                th:text="${intervalSeconds}">60</strong>s
+            </span>
+        </div>
+
+    </div>
+
+    <!-- Settings drawer -->
+    <div class="settings-panel" id="settingsPanel">
+        <button class="settings-toggle" id="settingsToggle" aria-label="Stream settings">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            Settings
+        </button>
+
+        <div class="settings-drawer" id="settingsDrawer">
+            <h3 class="settings-drawer__title">Stream settings</h3>
+
+            <!-- Interval -->
+            <div class="settings-group">
+                <label class="settings-label">Refresh every</label>
+                <div class="interval-grid" id="intervalGrid">
+                    <button th:each="opt : ${intervalOptions}"
+                            th:text="${opt < 60 ? opt + 's' : opt < 3600 ? (opt/60) + ' min' : opt < 86400 ? (opt/3600) + ' hr' : opt < 604800 ? (opt/86400) + ' d' : '1 wk'}"
+                            th:data-value="${opt}"
+                            th:classappend="${opt == intervalSeconds} ? 'interval-btn--active' : ''"
+                            class="interval-btn"
+                            type="button">
+                    </button>
+                </div>
+            </div>
+
+            <!-- Source mode (authenticated only) -->
+            <sec:authorize access="isAuthenticated()">
+                <div class="settings-group">
+                    <label class="settings-label">Quote source</label>
+                    <div class="source-tabs" id="sourceTabs">
+                        <button th:each="mode : ${sourceModes}"
+                                th:text="${mode.name().charAt(0) + mode.name().substring(1).toLowerCase()}"
+                                th:data-mode="${mode.name()}"
+                                th:classappend="${settings != null and settings.sourceMode == mode} ? 'source-tab--active' : ''"
+                                class="source-tab"
+                                type="button">
+                        </button>
+                    </div>
+                </div>
+            </sec:authorize>
+
+            <!-- Anonymous CTA -->
+            <sec:authorize access="isAnonymous()">
+                <div class="settings-group settings-group--cta">
+                    <p class="settings-hint">
+                        <a th:href="@{/register}">Create an account</a> to stream your own quotes and filter by source.
+                    </p>
+                </div>
+            </sec:authorize>
+        </div>
+    </div>
+
+</main>
+
+<script th:inline="javascript">
+    const INTERVAL_SECONDS = /*[[${intervalSeconds}]]*/ 60;
+    const CSRF_TOKEN  = document.querySelector('meta[name="_csrf"]')?.content;
+    const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+    let countdown = INTERVAL_SECONDS;
+    let currentInterval = INTERVAL_SECONDS;
+    let timerInterval = null;
+
+    const countdownEl  = document.getElementById('countdownDisplay');
+    const timerBarFill = document.getElementById('timerBarFill');
+    const quoteCard    = document.getElementById('quoteCard');
+    const quoteText    = document.getElementById('quoteText');
+    const quoteAuthor  = document.getElementById('quoteAuthor');
+    const quoteCategory = document.getElementById('quoteCategory');
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        countdown = currentInterval;
+        timerInterval = setInterval(tick, 1000);
+    }
+
+    function tick() {
+        countdown--;
+        if (countdownEl) countdownEl.textContent = countdown > 0 ? countdown : '…';
+        if (timerBarFill) {
+            const pct = ((currentInterval - countdown) / currentInterval) * 100;
+            timerBarFill.style.width = pct + '%';
+        }
+        if (countdown <= 0) fetchNextQuote();
+    }
+
+    async function fetchNextQuote() {
+        clearInterval(timerInterval);
+        try {
+            const res = await fetch('/api/quote/next');
+            if (res.status === 204) { startTimer(); return; }
+            const data = await res.json();
+
+            if (quoteCard) {
+                quoteCard.classList.add('quote-card--fade');
+                await sleep(400);
+
+                if (quoteText) quoteText.textContent = data.text;
+                if (quoteAuthor) quoteAuthor.textContent = data.author || '';
+                if (quoteCategory) {
+                    quoteCategory.textContent = data.category || '';
+                    quoteCategory.style.display = data.category ? 'inline-flex' : 'none';
+                }
+
+                quoteCard.classList.remove('quote-card--fade');
+            }
+        } catch (e) {
+            console.warn('Quote fetch failed, retrying next cycle');
+        }
+        startTimer();
+    }
+
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    async function saveSettings(payload) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (CSRF_TOKEN && CSRF_HEADER) headers[CSRF_HEADER] = CSRF_TOKEN;
+        await fetch('/api/stream/settings', {
+            method: 'POST', headers, body: JSON.stringify(payload)
+        });
+    }
+
+    // Interval buttons
+    document.getElementById('intervalGrid')?.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.interval-btn');
+        if (!btn) return;
+        const val = parseInt(btn.dataset.value);
+        currentInterval = val;
+        document.querySelectorAll('.interval-btn').forEach(b => b.classList.remove('interval-btn--active'));
+        btn.classList.add('interval-btn--active');
+        if (countdownEl) countdownEl.textContent = val;
+        await saveSettings({ intervalSeconds: val, sourceMode: getCurrentSourceMode() });
+        startTimer();
+    });
+
+    // Source mode tabs
+    document.getElementById('sourceTabs')?.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.source-tab');
+        if (!btn) return;
+        document.querySelectorAll('.source-tab').forEach(b => b.classList.remove('source-tab--active'));
+        btn.classList.add('source-tab--active');
+        await saveSettings({ intervalSeconds: currentInterval, sourceMode: btn.dataset.mode });
+        fetchNextQuote();
+    });
+
+    function getCurrentSourceMode() {
+        return document.querySelector('.source-tab--active')?.dataset.mode || 'COMMUNITY';
+    }
+
+    // Settings drawer toggle
+    document.getElementById('settingsToggle')?.addEventListener('click', () => {
+        document.getElementById('settingsDrawer')?.classList.toggle('settings-drawer--open');
+    });
+
+    // Start
+    if (quoteCard) startTimer();
+</script>
+
+</body>
+</html>

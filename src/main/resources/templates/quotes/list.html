@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Quotes')}"></head>
+<body class="page-dashboard">
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="dash-main">
+    <div class="dash-container">
+
+        <header class="dash-header">
+            <h1 class="dash-title">Quotes</h1>
+            <button class="btn btn--primary" id="addQuoteToggle">+ Add quote</button>
+        </header>
+
+        <div th:if="${success}" class="alert alert--success" th:text="${success}"></div>
+        <div th:if="${error}"   class="alert alert--error"   th:text="${error}"></div>
+
+        <!-- Add quote form (collapsed by default) -->
+        <div class="collapsible" id="addQuoteForm">
+            <form th:action="@{/quotes}" method="post" th:object="${quoteRequest}" class="card-form">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <h2 class="card-form__title">New quote</h2>
+
+                <div class="form-group">
+                    <label class="form-label">Quote text *</label>
+                    <textarea class="form-input form-input--textarea" th:field="*{text}"
+                              placeholder="Enter the quote..." rows="4"
+                              th:classappend="${#fields.hasErrors('text')} ? 'form-input--error' : ''"></textarea>
+                    <span th:if="${#fields.hasErrors('text')}" th:errors="*{text}" class="form-error"></span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Author</label>
+                        <input class="form-input" th:field="*{author}" type="text" placeholder="e.g. Marcus Aurelius"/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select class="form-input form-select" th:field="*{categoryId}">
+                            <option value="">— None —</option>
+                            <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}">Category</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group form-group--row">
+                    <label class="checkbox-label">
+                        <input type="checkbox" th:field="*{publicVisible}"/>
+                        <span>Public (visible to all users)</span>
+                    </label>
+                </div>
+
+                <div class="form-group--actions">
+                    <button type="submit" class="btn btn--primary">Save quote</button>
+                    <button type="button" class="btn btn--ghost" id="addQuoteCancel">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Quotes table -->
+        <div class="table-wrap" th:if="${!quotes.isEmpty()}">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Quote</th>
+                        <th>Author</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="q : ${quotes}">
+                        <td class="td--quote" th:text="${#strings.abbreviate(q.text, 80)}">Quote</td>
+                        <td th:text="${q.author ?: '—'}">Author</td>
+                        <td>
+                            <span th:if="${q.category}" class="badge badge--category" th:text="${q.category.name}">Cat</span>
+                            <span th:unless="${q.category}" class="text-muted">—</span>
+                        </td>
+                        <td>
+                            <span th:if="${q.active  and  q.publicVisible}" class="badge badge--active">Active · Public</span>
+                            <span th:if="${q.active  and !q.publicVisible}" class="badge badge--private">Active · Private</span>
+                            <span th:if="${!q.active and  q.publicVisible}" class="badge badge--inactive">Off · Public</span>
+                            <span th:if="${!q.active and !q.publicVisible}" class="badge badge--inactive">Off · Private</span>
+                        </td>
+                        <td class="td--actions">
+                            <a th:href="@{/quotes/{id}/edit(id=${q.id})}" class="btn btn--sm">Edit</a>
+                            <form th:action="@{/quotes/{id}/toggle-active(id=${q.id})}" method="post" style="display:inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button class="btn btn--sm btn--ghost"
+                                        th:text="${q.active ? 'Disable' : 'Enable'}">Toggle</button>
+                            </form>
+                            <form th:action="@{/quotes/{id}/toggle-public(id=${q.id})}" method="post" style="display:inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button class="btn btn--sm btn--ghost"
+                                        th:text="${q.publicVisible ? 'Make private' : 'Make public'}">Toggle</button>
+                            </form>
+                            <form th:action="@{/quotes/{id}/delete(id=${q.id})}" method="post" style="display:inline"
+                                  onsubmit="return confirm('Delete this quote?')">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button class="btn btn--sm btn--danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="dash-empty" th:if="${quotes.isEmpty()}">
+            <span class="dash-empty__icon">✦</span>
+            <p>No quotes yet. Add your first one above.</p>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    const toggle  = document.getElementById('addQuoteToggle');
+    const form    = document.getElementById('addQuoteForm');
+    const cancel  = document.getElementById('addQuoteCancel');
+
+    toggle?.addEventListener('click', () => form.classList.toggle('collapsible--open'));
+    cancel?.addEventListener('click', () => form.classList.remove('collapsible--open'));
+
+    // Auto-open form if there are validation errors
+    if (document.querySelector('.form-input--error')) {
+        form.classList.add('collapsible--open');
+    }
+</script>
+
+</body>
+</html>

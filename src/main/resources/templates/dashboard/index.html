@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body class="page-dashboard">
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="dash-main">
+    <div class="dash-container">
+
+        <header class="dash-header">
+            <div>
+                <h1 class="dash-title">Your Stream</h1>
+                <p class="dash-subtitle" th:text="'Welcome back, ' + ${user.username}">Welcome back</p>
+            </div>
+            <a th:href="@{/}" class="btn btn--ghost">▶ Go to stream</a>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-card__num" th:text="${totalQuotes}">0</span>
+                <span class="stat-card__label">Total quotes</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-card__num" th:text="${activeQuotes}">0</span>
+                <span class="stat-card__label">Active</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-card__num" th:text="${publicQuotes}">0</span>
+                <span class="stat-card__label">Public</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-card__num" th:text="${totalCategories}">0</span>
+                <span class="stat-card__label">Categories</span>
+            </div>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="dash-actions">
+            <a th:href="@{/quotes}" class="action-card">
+                <span class="action-card__icon">✦</span>
+                <span class="action-card__label">Manage quotes</span>
+                <span class="action-card__arrow">→</span>
+            </a>
+            <a th:href="@{/categories}" class="action-card">
+                <span class="action-card__icon">◈</span>
+                <span class="action-card__label">Manage categories</span>
+                <span class="action-card__arrow">→</span>
+            </a>
+        </div>
+
+        <!-- Recent quotes -->
+        <section class="dash-section" th:if="${!recentQuotes.isEmpty()}">
+            <h2 class="dash-section__title">Recent quotes</h2>
+            <div class="recent-list">
+                <div th:each="q : ${recentQuotes}" class="recent-item">
+                    <p class="recent-item__text" th:text="${q.text}">Quote text</p>
+                    <div class="recent-item__meta">
+                        <span th:if="${q.author}" class="recent-item__author" th:text="${q.author}">Author</span>
+                        <span th:if="${q.category}" class="badge badge--category" th:text="${q.category.name}">Category</span>
+                        <span th:if="${!q.active}" class="badge badge--inactive">Inactive</span>
+                        <span th:if="${!q.publicVisible}" class="badge badge--private">Private</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Empty state -->
+        <section class="dash-empty" th:if="${totalQuotes == 0}">
+            <span class="dash-empty__icon">❝</span>
+            <p>You have no quotes yet.</p>
+            <a th:href="@{/quotes}" class="btn btn--primary">Add your first quote →</a>
+        </section>
+
+    </div>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Categories')}"></head>
+<body class="page-dashboard">
+
+<nav th:replace="~{fragments/layout :: nav}"></nav>
+
+<main class="dash-main">
+    <div class="dash-container dash-container--narrow">
+
+        <header class="dash-header">
+            <h1 class="dash-title">Categories</h1>
+        </header>
+
+        <div th:if="${success}" class="alert alert--success" th:text="${success}"></div>
+        <div th:if="${error}"   class="alert alert--error"   th:text="${error}"></div>
+
+        <!-- Add category -->
+        <form th:action="@{/categories}" method="post" th:object="${categoryRequest}" class="inline-form">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <div class="inline-form__fields">
+                <input class="form-input" th:field="*{name}"
+                       type="text" placeholder="New category name…"
+                       th:classappend="${#fields.hasErrors('name')} ? 'form-input--error' : ''"/>
+                <button type="submit" class="btn btn--primary">Add</button>
+            </div>
+            <span th:if="${#fields.hasErrors('name')}" th:errors="*{name}" class="form-error"></span>
+        </form>
+
+        <!-- Categories list -->
+        <div class="cat-list" th:if="${!categories.isEmpty()}">
+            <div th:each="cat : ${categories}" class="cat-item">
+                <form th:action="@{/categories/{id}/rename(id=${cat.id})}" method="post"
+                      class="cat-item__rename-form">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input class="form-input cat-item__input" type="text"
+                           name="name" th:value="${cat.name}"/>
+                    <button type="submit" class="btn btn--sm">Rename</button>
+                </form>
+
+                <div class="cat-item__meta">
+                    <span class="badge badge--category"
+                          th:text="${cat.quoteCount} + ' quote' + (${cat.quoteCount} != 1 ? 's' : '')">
+                    </span>
+                    <form th:action="@{/categories/{id}/delete(id=${cat.id})}" method="post" style="display:inline"
+                          onsubmit="return confirm('Delete this category? Quotes will be uncategorized.')">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button class="btn btn--sm btn--danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="dash-empty" th:if="${categories.isEmpty()}">
+            <span class="dash-empty__icon">◈</span>
+            <p>No categories yet. Create one above to organize your quotes.</p>
+        </div>
+
+    </div>
+</main>
+
+</body>
+</html>

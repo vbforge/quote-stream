@@ -1,0 +1,25 @@
+# Maven
+target/
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.class
+
+# Env — never commit real secrets
+.env
+.env.prod
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Spring
+spring-shell.log
