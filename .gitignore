@@ -30,4 +30,7 @@ logs/
 spring-shell.log
 
 # ── helpers ─────────────────────────────────────────────────
-configurations-theory.md
+documentations/configurations-theory.md
+documentations/Supabase-Render-Deploy.md
+documentations/Render-Auto-Deploy-Setup.md
+documentations/PROJECT-GUIDE.md
