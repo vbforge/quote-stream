@@ -74,3 +74,10 @@ src/main/resources/
 ## Deployment
 
 See [DEPLOY.md](DEPLOY.md) for Railway / Render / Fly.io instructions.
+
+## Screenshots
+
+![](screenshots/Screenshot1.png)
+![](screenshots/Screenshot2.png)
+![](screenshots/Screenshot3.png)
+![](screenshots/Screenshot4.png)
