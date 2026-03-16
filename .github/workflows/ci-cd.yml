@@ -42,15 +42,16 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build with Maven
+      - name: Build with Maven (skip tests here, run separately)
         run: mvn clean package -DskipTests -q
 
       - name: Run tests
-        run: mvn test
+        run: mvn test -Dspring.profiles.active=test
         env:
-          DB_URL:      jdbc:postgresql://localhost:5432/quotestream_test
-          DB_USER:     quotestream
-          DB_PASSWORD: quotestream_test
+          SPRING_PROFILES_ACTIVE: test
+          DB_URL:                 jdbc:postgresql://localhost:5432/quotestream_test
+          DB_USER:                quotestream
+          DB_PASSWORD:            quotestream_test
 
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v4
@@ -60,6 +61,7 @@ jobs:
           retention-days: 1
 
   # ── Job 2: Docker Build & Push ────────────────────────────────────────────
+  # Only runs on push to main (not on pull requests)
   docker-push:
     name: Docker Build & Push
     runs-on: ubuntu-latest

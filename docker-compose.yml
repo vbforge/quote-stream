@@ -1,3 +1,9 @@
+# ─────────────────────────────────────────────────────────────
+# docker-compose.yml — LOCAL DEVELOPMENT ONLY
+# Usage: docker-compose up --build
+# Activates Spring profile: local
+# ─────────────────────────────────────────────────────────────
+
 services:
 
   db:
@@ -7,7 +13,7 @@ services:
     environment:
       POSTGRES_DB:       quotestream
       POSTGRES_USER:     quotestream
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-quotestream_dev}
+      POSTGRES_PASSWORD: quotestream_local
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
@@ -16,7 +22,7 @@ services:
       timeout: 5s
       retries: 5
     ports:
-      - "5432:5432"   # expose locally for dev; remove in prod
+      - "5432:5432"   # exposed locally so you can connect with DBeaver/pgAdmin
 
   app:
     build: .
@@ -26,9 +32,10 @@ services:
       db:
         condition: service_healthy
     environment:
-      DB_URL:      jdbc:postgresql://db:5432/quotestream
-      DB_USER:     quotestream
-      DB_PASSWORD: ${DB_PASSWORD:-quotestream_dev}
+      SPRING_PROFILES_ACTIVE: local
+      DB_URL:                 jdbc:postgresql://db:5432/quotestream
+      DB_USER:                quotestream
+      DB_PASSWORD:            quotestream_local
     ports:
       - "8080:8080"
 

@@ -1,9 +1,9 @@
-# docker-compose.prod.yml
-# Production override — use alongside docker-compose.yml:
-#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-#
-# Or standalone (recommended for deployment):
-#   docker-compose -f docker-compose.prod.yml up -d
+# ─────────────────────────────────────────────────────────────
+# docker-compose.prod.yml — PRODUCTION ONLY
+# Usage: docker-compose -f docker-compose.prod.yml up -d
+# Requires .env file with: DOCKERHUB_USERNAME, DB_USER, DB_PASSWORD
+# Activates Spring profile: prod
+# ─────────────────────────────────────────────────────────────
 
 services:
 
@@ -16,25 +16,26 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - pg_data:/var/lib/postgresql/data
-    # NO ports exposed — DB is internal only in production
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    # NO port 5432 exposed — DB is internal only in production
     networks:
       - internal
 
   app:
-    image: ${DOCKERHUB_USERNAME}/quote-stream:latest   # pulled from DockerHub
+    image: ${DOCKERHUB_USERNAME}/quote-stream:latest
     restart: always
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DB_URL:      jdbc:postgresql://db:5432/quotestream
-      DB_USER:     ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL:                 jdbc:postgresql://db:5432/quotestream
+      DB_USER:                ${DB_USER}
+      DB_PASSWORD:            ${DB_PASSWORD}
     ports:
       - "8080:8080"
     networks:

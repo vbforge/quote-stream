@@ -1,25 +1,33 @@
-# Maven
+# ── Maven ──────────────────────────────────────────────────
 target/
 *.jar
 *.war
 
-# IDE
+# ── IDE ────────────────────────────────────────────────────
 .idea/
 *.iml
 .vscode/
 *.class
+*.classpath
+*.project
+*.settings/
 
-# Env — never commit real secrets
+# ── Environment / Secrets — NEVER commit these ─────────────
 .env
 .env.prod
+# .env.example      ← these ARE committed (they have no real values)
+# .env.prod.example ← these ARE committed (they have no real values)
 
-# OS
+# ── OS ─────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 
-# Logs
+# ── Logs ───────────────────────────────────────────────────
 *.log
 logs/
 
-# Spring
+# ── Spring ─────────────────────────────────────────────────
 spring-shell.log
+
+# ── helpers ─────────────────────────────────────────────────
+configurations-theory.md
